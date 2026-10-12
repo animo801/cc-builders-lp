@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+@theme {
+  --font-serif: var(--font-baskervville), Georgia, serif;
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --color-brand: #348585;
+  --color-brand-tint: #dfffff;
+  --color-ink: #111111;
+  --color-placeholder: #d9d9d9;
+
+  --animate-marquee: marquee var(--marquee-duration, 40s) linear infinite;
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+body {
+  background: white;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
