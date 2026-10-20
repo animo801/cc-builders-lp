@@ -9,7 +9,7 @@
   --color-ink: #111111;
   --color-placeholder: #d9d9d9;
 
-  --animate-marquee: marquee var(--marquee-duration, 40s) linear infinite;
+  --animate-marquee: marquee 40s linear infinite;
 
   @keyframes marquee {
     to {

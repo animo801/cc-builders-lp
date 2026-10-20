@@ -4,64 +4,6 @@ import ctaImage from "../public/images/cta.jpg";
 import Button from "./components/button";
 import Logo from "./components/logo";
 
-// SAMPLE REVIEWS: placeholder copy to show the layout. Replace with real
-// Google reviews (and the reviewer's name as shown on Google) before launch.
-const reviews = [
-  {
-    name: "Customer name",
-    project: "Kitchen remodel",
-    text: "We got three bids for our kitchen and CC Builders was the only one that showed us exactly where the money was going. Every cabinet, outlet, and hour of labor was on there. When we needed to trim the budget, we could see what to cut instead of guessing.",
-  },
-  {
-    name: "Customer name",
-    project: "Bathroom remodel",
-    text: "The line item bid made it easy to compare. We swapped the tile we had picked for something less expensive and saw the savings right away. The crew was clean, showed up on time, and kept us updated every day.",
-  },
-  {
-    name: "Customer name",
-    project: "Basement finish",
-    text: "No surprise change orders at the end. When something came up behind a wall, they walked us through it and priced it out before doing anything. That kind of honesty is rare.",
-  },
-  {
-    name: "Customer name",
-    project: "New floors",
-    text: "New floors through the whole main level. The bid broke out removal, prep, materials, and install room by room, so we knew exactly what we were paying for. Great communication from start to finish.",
-  },
-];
-
-const faqs = [
-  {
-    question: "What is a line item bid?",
-    answer:
-      "A line item bid breaks your remodel into every individual piece of work and material (demolition, framing, electrical, plumbing, fixtures, finishes, and labor), each with its own price. Instead of one lump sum, you see exactly what each part of the project costs.",
-  },
-  {
-    question: "Why is that better than a regular quote?",
-    answer:
-      "A lump-sum quote makes it hard to compare contractors or adjust your budget. With a line item bid you can compare bids apples to apples, see which choices drive the cost, and decide where to save or splurge before any work starts.",
-  },
-  {
-    question: "How do I get a bid?",
-    answer:
-      "Click Get your bid and answer a few quick questions about your project. We’ll set up a time to walk through your space, talk about what you want, and take measurements. Then we put together your detailed bid and go over it with you line by line.",
-  },
-  {
-    question: "Can I change the scope after I get my bid?",
-    answer:
-      "Yes. Because every item is priced on its own, it’s easy to add, remove, or swap pieces of the project, like choosing a different tile or holding off on new lighting, and see exactly how the total changes.",
-  },
-  {
-    question: "What if something unexpected comes up during construction?",
-    answer:
-      "Remodels sometimes uncover surprises, like water damage or outdated wiring behind a wall. If that happens, we show you what we found and price the fix as its own line item. Nothing extra gets done without your approval.",
-  },
-  {
-    question: "What kinds of projects do you take on?",
-    answer:
-      "Kitchens, bathrooms, flooring, basements, and whole-home remodels. If you’re not sure whether your project is a fit, reach out and ask.",
-  },
-];
-
 // Infinite horizontal scroller. Renders the items twice and slides the track
 // by half its width so the loop is seamless. `copyClassName` must include a
 // trailing padding equal to the gap, e.g. "gap-4 pr-4".
@@ -69,7 +11,7 @@ function Marquee({ children, copyClassName, duration = "40s", className = "" }) 
   return (
     <div
       className={`flex w-max animate-marquee motion-reduce:animate-none ${className}`}
-      style={{ "--marquee-duration": duration }}
+      style={{ animationDuration: duration }}
     >
       <div className={`flex shrink-0 items-center ${copyClassName}`}>{children}</div>
       <div aria-hidden className={`flex shrink-0 items-center ${copyClassName}`}>
@@ -100,6 +42,8 @@ function PriceTag({ label, price, side, className }) {
   );
 }
 
+const TRUSTED_AVATARS = ["/images/trusted/customer-1.png", "/images/trusted/customer-2.png"];
+
 function TrustedBar() {
   return (
     <div className="absolute bottom-[21px] left-1/2 flex h-[79px] w-[897px] max-w-[calc(100%-32px)] -translate-x-1/2 items-center overflow-hidden rounded-[8px] bg-white pl-[40.5px] pr-[5.5px]">
@@ -108,8 +52,16 @@ function TrustedBar() {
       </p>
       <div className="relative flex h-full flex-1 items-center overflow-hidden">
         <Marquee copyClassName="gap-[56px] pr-[56px]" duration="40s">
+          {/* Only two customer photos so far; they alternate to fill the strip. */}
           {Array.from({ length: 6 }, (_, i) => (
-            <img key={i} src="/images/avatar-placeholder.svg" alt="" width={64} height={64} className="shrink-0" />
+            <img
+              key={i}
+              src={TRUSTED_AVATARS[i % TRUSTED_AVATARS.length]}
+              alt=""
+              width={64}
+              height={64}
+              className="size-16 shrink-0"
+            />
           ))}
         </Marquee>
         <div className="pointer-events-none absolute inset-y-0 left-0 w-[184px] bg-gradient-to-r from-white to-white/0" />
@@ -119,7 +71,7 @@ function TrustedBar() {
   );
 }
 
-function Hero() {
+function Hero({ project }) {
   return (
     <section className="relative h-[960px] overflow-hidden text-white">
       <Image src={heroImage} alt="" fill priority sizes="100vw" className="object-cover" />
@@ -131,31 +83,31 @@ function Hero() {
 
       <div className="relative mx-auto flex max-w-[757px] flex-col items-center px-4 pt-[200px] text-center">
         <h1 className="font-serif text-[44px] font-bold leading-[1] md:text-[64px]">
-          Get a detailed line item bid on your remodel
+          {project.headline}
         </h1>
         <p className="mt-[12px] font-serif text-[22px] leading-[40px] md:text-[28px]">
           This is the thing we do. And it is glorious.
         </p>
         <div className="mt-[24px]">
-          <Button />
+          <Button href={`/bid/${project.slug}`} />
         </div>
       </div>
 
-      <PriceTag label="New floors" price="$15,514.11" side="right" className="left-[70.21%] top-[525px]" />
-      <PriceTag label="New floors" price="$15,514.11" side="left" className="left-[15.28%] top-[595px]" />
-      <PriceTag label="New floors" price="$15,514.11" side="right" className="left-[61.18%] top-[750px]" />
+      <PriceTag {...project.priceTags[0]} side="right" className="left-[70.21%] top-[525px]" />
+      <PriceTag {...project.priceTags[1]} side="left" className="left-[15.28%] top-[595px]" />
+      <PriceTag {...project.priceTags[2]} side="right" className="left-[61.18%] top-[750px]" />
 
       <TrustedBar />
     </section>
   );
 }
 
-function Intro() {
+function Intro({ project }) {
   return (
     <section className="mx-auto grid max-w-[1248px] gap-12 px-4 py-24 lg:grid-cols-[648px_560px] lg:justify-between lg:gap-0">
       <div className="lg:pt-[47px]">
         <h2 className="font-serif text-[36px] font-bold leading-[1] md:text-[48px]">
-          Get a detailed line item bid on your remodel
+          {project.headline}
         </h2>
         <div className="mt-4 space-y-10 font-serif text-[20px] leading-[40px] md:text-[24px]">
           <p>
@@ -168,7 +120,7 @@ function Intro() {
           </p>
         </div>
         <div className="mt-8">
-          <Button />
+          <Button href={`/bid/${project.slug}`} />
         </div>
       </div>
       <div className="aspect-[560/582] w-full bg-placeholder" />
@@ -176,16 +128,24 @@ function Intro() {
   );
 }
 
-function Projects() {
+function Projects({ project }) {
+  // Duration scales with the photo count so every carousel moves at the same speed.
+  const count = project.gallery?.length ?? 5;
   return (
     <section className="overflow-hidden bg-brand/5 py-24">
       <h2 className="px-4 text-center font-serif text-[36px] font-bold leading-[48px] text-black md:text-[48px]">
-        Projects we’ve completed
+        {project.plural} we’ve completed
       </h2>
-      <Marquee className="mt-10 hover:[animation-play-state:paused]" copyClassName="gap-4 pr-4" duration="120s">
-        {Array.from({ length: 5 }, (_, i) => (
-          <div key={i} className="aspect-[548/531] w-[min(548px,80vw)] shrink-0 bg-placeholder" />
-        ))}
+      <Marquee className="mt-10 hover:[animation-play-state:paused]" copyClassName="gap-4 pr-4" duration={`${count * 20}s`}>
+        {project.gallery
+          ? project.gallery.map((photo) => (
+              <div key={photo.src} className="relative aspect-[548/531] w-[min(548px,80vw)] shrink-0 bg-placeholder">
+                <Image src={photo.src} alt={photo.alt} fill sizes="(min-width: 685px) 548px, 80vw" className="object-cover" />
+              </div>
+            ))
+          : Array.from({ length: count }, (_, i) => (
+              <div key={i} className="aspect-[548/531] w-[min(548px,80vw)] shrink-0 bg-placeholder" />
+            ))}
       </Marquee>
     </section>
   );
@@ -206,7 +166,7 @@ function ReviewCard({ name, project, text }) {
   );
 }
 
-function Reviews() {
+function Reviews({ reviews }) {
   return (
     <section className="py-24">
       <h2 className="mx-auto max-w-[1232px] px-4 font-serif text-[36px] font-bold leading-[48px] text-black md:text-[48px]">
@@ -221,7 +181,7 @@ function Reviews() {
   );
 }
 
-function Faq() {
+function Faq({ faqs }) {
   return (
     <section className="bg-brand/5 px-4 pb-[120px] pt-[157px]">
       <h2 className="text-center font-serif text-[40px] font-bold leading-[48px] text-black md:text-[56px]">
@@ -250,32 +210,32 @@ function Faq() {
   );
 }
 
-function ClosingCta() {
+function ClosingCta({ project }) {
   return (
     <section className="relative h-[642px] overflow-hidden text-white">
       <Image src={ctaImage} alt="" fill sizes="100vw" className="object-cover object-[50%_56%]" />
       <div className="absolute inset-0 bg-gradient-to-b from-ink/40 to-ink/0" />
       <div className="relative mx-auto flex max-w-[757px] flex-col items-center px-4 pt-[201px] text-center">
         <h2 className="font-serif text-[44px] font-bold leading-[1] md:text-[64px]">
-          Get a detailed line item bid on your remodel
+          {project.headline}
         </h2>
         <div className="mt-8">
-          <Button />
+          <Button href={`/bid/${project.slug}`} />
         </div>
       </div>
     </section>
   );
 }
 
-export default function Home() {
+export default function LandingPage({ project }) {
   return (
     <main>
-      <Hero />
-      <Intro />
-      <Projects />
-      <Reviews />
-      <Faq />
-      <ClosingCta />
+      <Hero project={project} />
+      <Intro project={project} />
+      <Projects project={project} />
+      <Reviews reviews={project.reviews} />
+      <Faq faqs={project.faqs} />
+      <ClosingCta project={project} />
       <footer className="h-[630px] bg-ink" />
     </main>
   );

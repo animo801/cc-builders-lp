@@ -1,6 +1,13 @@
 import Link from "next/link";
 import BidShell from "../../bid-shell";
 
+// Only remodels has a referral path (single-bathroom remodels).
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return [{ project: "remodels" }];
+}
+
 export const metadata = { title: "Bathroom remodel recommendations | CC Builders" };
 
 // PLACEHOLDER: replace with the contractors you actually refer people to.
@@ -39,7 +46,7 @@ export default function ReferralsPage() {
 
       <p className="mt-10 text-[16px] text-ink/60">
         Remodeling more than one bathroom?{" "}
-        <Link href="/bid/remodel" className="font-bold text-brand underline">
+        <Link href="/bid/remodels" className="font-bold text-brand underline">
           Start your bid again
         </Link>
       </p>
