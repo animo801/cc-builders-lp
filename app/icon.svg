@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect width="100" height="100" rx="22" fill="#348585"/>
+  <!-- Logo mark simplified for small sizes: roof outline with "C | C", no BUILDERS. -->
+  <g stroke="#ffffff">
+    <path d="M18 74.6V42.5L50 26l32 16.5v32.1" stroke-width="3.5"/>
+    <path d="M37.63 56.47A6.4 6.4 0 1 0 37.63 65.53M71.63 56.47A6.4 6.4 0 1 0 71.63 65.53" stroke-width="3.9"/>
+    <path d="M50 51.7V70" stroke-width="1.6" stroke-opacity="0.55"/>
+  </g>
+</svg>

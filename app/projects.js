@@ -23,12 +23,9 @@ import {
 // continuing.
 
 const ZIP_STEP = { id: "zip", type: "zip", question: "What zip code is your project in?" };
-const CONTACT_STEP = { id: "contact", type: "contact", question: "Where should we send your bid?" };
+const CONTACT_STEP = { id: "contact", type: "contact", question: "Great, now we just need your contact info." };
 
 const SINGLE_BATHROOM = "1 bathroom";
-
-// SAMPLE REVIEWS throughout: placeholder copy to show the layout. Replace with
-// real Google reviews (and the reviewer's name as shown on Google) before launch.
 
 const remodels = {
   slug: "remodels",
@@ -47,31 +44,9 @@ const remodels = {
   ],
   headline: "Get a detailed line item bid on your remodel",
   priceTags: [
-    { label: "New floors", price: "$15,514.11" },
-    { label: "Kitchen cabinets", price: "$22,380.40" },
-    { label: "Bathroom tile", price: "$8,216.75" },
-  ],
-  reviews: [
-    {
-      name: "Customer name",
-      project: "Kitchen remodel",
-      text: "We got three bids for our kitchen and CC Builders was the only one that showed us exactly where the money was going. Every cabinet, outlet, and hour of labor was on there. When we needed to trim the budget, we could see what to cut instead of guessing.",
-    },
-    {
-      name: "Customer name",
-      project: "Bathroom remodel",
-      text: "The line item bid made it easy to compare. We swapped the tile we had picked for something less expensive and saw the savings right away. The crew was clean, showed up on time, and kept us updated every day.",
-    },
-    {
-      name: "Customer name",
-      project: "Basement finish",
-      text: "No surprise change orders at the end. When something came up behind a wall, they walked us through it and priced it out before doing anything. That kind of honesty is rare.",
-    },
-    {
-      name: "Customer name",
-      project: "New floors",
-      text: "New floors through the whole main level. The bid broke out removal, prep, materials, and install room by room, so we knew exactly what we were paying for. Great communication from start to finish.",
-    },
+    { label: "Paint and smooth drywall finish", price: "$15,514.11" },
+    { label: "Sliding glass door", price: "$22,380.40" },
+    { label: "New hardwood floors", price: "$8,216.75" },
   ],
   faqs: [
     {
@@ -155,28 +130,6 @@ const additions = {
     { label: "Foundation", price: "$18,940.00" },
     { label: "Framing", price: "$27,615.32" },
     { label: "Roof tie-in", price: "$9,482.10" },
-  ],
-  reviews: [
-    {
-      name: "Customer name",
-      project: "Primary suite addition",
-      text: "We added a primary suite off the back of the house. The bid listed everything from the foundation to the last light switch, so when we wanted a bigger shower we knew exactly what it added to the total.",
-    },
-    {
-      name: "Customer name",
-      project: "Family room addition",
-      text: "They made the new room look like it was always part of the house. The roofline and siding match perfectly, and we never had a surprise on the bill.",
-    },
-    {
-      name: "Customer name",
-      project: "Second story addition",
-      text: "Going up was a big project and they kept us informed the whole way. Permits, engineering, framing, all of it was on the bid as its own line, so nothing caught us off guard.",
-    },
-    {
-      name: "Customer name",
-      project: "Garage addition",
-      text: "Clear pricing, a clean job site, and a crew that showed up when they said they would. We would hire them again in a heartbeat.",
-    },
   ],
   faqs: [
     {
@@ -264,28 +217,6 @@ const newBuild = {
     { label: "Framing", price: "$84,710.25" },
     { label: "Windows", price: "$26,148.90" },
   ],
-  reviews: [
-    {
-      name: "Customer name",
-      project: "Custom home",
-      text: "Building a house felt overwhelming until we saw the bid. Every phase was broken out, from excavation to trim, so we could make choices with real numbers in front of us.",
-    },
-    {
-      name: "Customer name",
-      project: "New build",
-      text: "We compared their bid with two others and theirs was the only one we could actually read. When we upgraded the windows we saw exactly what it cost. No guessing.",
-    },
-    {
-      name: "Customer name",
-      project: "Custom home",
-      text: "Weekly updates, an organized site, and a final bill that matched the bid. We moved in on schedule and love the house.",
-    },
-    {
-      name: "Customer name",
-      project: "New build",
-      text: "They helped us think through things we hadn’t considered on our lot, like grading and utility hookups, and priced all of it up front.",
-    },
-  ],
   faqs: [
     {
       question: "What is a line item bid?",
@@ -364,28 +295,6 @@ const adus = {
     { label: "Utility hookups", price: "$12,470.00" },
     { label: "Kitchenette", price: "$14,935.45" },
     { label: "Framing", price: "$21,308.80" },
-  ],
-  reviews: [
-    {
-      name: "Customer name",
-      project: "Backyard ADU",
-      text: "We built a backyard cottage for my parents. The line item bid showed us what the utility hookups would cost before we committed, which was the part we were most worried about.",
-    },
-    {
-      name: "Customer name",
-      project: "Garage conversion",
-      text: "They turned our garage into a rental unit and it already pays for itself. Every piece of the job was priced out, so we knew our numbers going in.",
-    },
-    {
-      name: "Customer name",
-      project: "Basement apartment",
-      text: "Clear bid, clean crew, and they handled the permits. When we wanted a bigger kitchenette we saw the price difference right away.",
-    },
-    {
-      name: "Customer name",
-      project: "Above-garage ADU",
-      text: "Great communication from start to finish. No surprise change orders, and the finished unit looks fantastic.",
-    },
   ],
   faqs: [
     {

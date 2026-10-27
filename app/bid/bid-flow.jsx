@@ -68,11 +68,11 @@ function Tile({ label, Icon, selected, onClick }) {
 function Field({ label, className = "", ...props }) {
   return (
     <label className={`block ${className}`}>
-      <span className="text-[16px] font-bold">{label}</span>
+      <span className="block text-[16px] font-bold leading-[20px]">{label}</span>
       <input
         required
         {...props}
-        className="mt-2 h-14 w-full border border-ink/30 bg-white px-4 text-[18px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+        className="mt-1 h-14 w-full border border-ink/20 bg-white px-4 text-[18px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
       />
     </label>
   );
@@ -236,7 +236,7 @@ export default function BidFlow({ slug }) {
                 rows={4}
                 value={data[otherField(current)]}
                 onChange={(e) => update({ [otherField(current)]: e.target.value })}
-                className="mt-2 w-full border border-ink/30 bg-white p-4 text-[18px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+                className="mt-2 w-full border border-ink/20 bg-white p-4 text-[18px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
               />
             </label>
           )}

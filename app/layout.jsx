@@ -3,7 +3,7 @@ import "./globals.css";
 
 const baskervville = Baskervville({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "700"],
   variable: "--font-baskervville",
 });
 
