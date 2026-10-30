@@ -32,9 +32,14 @@ async function sendToSheet(lead) {
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
-// Sends the Lead event to Meta's Conversions API. The browser pixel fires the
-// same event with the same eventId, so Meta counts it once. Never throws, so a
-// tracking problem can't fail a lead.
+// Meta events sent for every successful bid submission: the standard Lead
+// event, plus a custom one that's easy to find in Events Manager. Keep in sync
+// with the fbq calls in bid-flow.jsx.
+const META_LEAD_EVENTS = ["Lead", "BidRequestSubmitted"];
+
+// Sends the submission events to Meta's Conversions API. The browser pixel
+// fires the same events with the same eventId, so Meta counts each once. Never
+// throws, so a tracking problem can't fail a lead.
 async function sendLeadToMeta(eventId, project, answers) {
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
   const accessToken = process.env.META_CONVERSIONS_API_TOKEN;
@@ -48,8 +53,7 @@ async function sendLeadToMeta(eventId, project, answers) {
   const userAgent = headersList.get("user-agent");
   const phone = answers.phone?.replace(/\D/g, "");
 
-  const event = {
-    event_name: "Lead",
+  const base = {
     event_time: Math.floor(Date.now() / 1000),
     event_id: eventId,
     action_source: "website",
@@ -67,17 +71,22 @@ async function sendLeadToMeta(eventId, project, answers) {
       ...(userAgent && { client_user_agent: userAgent }),
     },
   };
+  const events = META_LEAD_EVENTS.map((event_name) => ({ event_name, ...base }));
 
   try {
     const res = await fetch(`https://graph.facebook.com/v21.0/${pixelId}/events?access_token=${accessToken}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: [event] }),
+      body: JSON.stringify({
+        data: events,
+        // Routes events to Events Manager's Test Events tab instead of live data.
+        ...(process.env.META_TEST_EVENT_CODE && { test_event_code: process.env.META_TEST_EVENT_CODE }),
+      }),
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) console.error(`Meta CAPI Lead failed: ${res.status} ${await res.text()}`);
+    if (!res.ok) console.error(`Meta CAPI events failed: ${res.status} ${await res.text()}`);
   } catch (err) {
-    console.error("Meta CAPI Lead errored", err);
+    console.error("Meta CAPI events errored", err);
   }
 }
 

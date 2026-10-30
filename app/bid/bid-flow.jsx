@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { activeSteps, initialAnswers, otherField, projects, validateStep } from "../projects";
+import { activeSteps, formatPhone, initialAnswers, otherField, projects, validateStep } from "../projects";
 import { submitLead } from "./actions";
 
 // Answers are kept in sessionStorage so a refresh, or coming back from the
@@ -159,7 +159,9 @@ export default function BidFlow({ slug }) {
     try {
       const result = await submitLead(slug, data);
       if (result.ok) {
+        // Same events and eventId as the Conversions API call in actions.js, so Meta dedupes them.
         window.fbq?.("track", "Lead", { content_name: project.title }, { eventID: result.eventId });
+        window.fbq?.("trackCustom", "BidRequestSubmitted", { content_name: project.title }, { eventID: result.eventId });
         setDone(true);
         try {
           sessionStorage.removeItem(storageKey);
@@ -270,7 +272,7 @@ export default function BidFlow({ slug }) {
             type="tel"
             autoComplete="tel"
             value={data.phone}
-            onChange={(e) => update({ phone: e.target.value })}
+            onChange={(e) => update({ phone: formatPhone(e.target.value) })}
           />
           <Field
             label="Email"

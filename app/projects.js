@@ -369,6 +369,17 @@ export const projects = { remodels, additions, "new-build": newBuild, adus };
 
 export const CONTACT_FIELDS = ["firstName", "lastName", "address", "phone", "email"];
 
+// Formats a US phone number as it's typed: (555) 123-4567. Drops a leading
+// country code 1 so autofilled "+1 555..." numbers fit.
+export function formatPhone(value) {
+  let digits = value.replace(/\D/g, "");
+  if (digits.length > 10 && digits.startsWith("1")) digits = digits.slice(1);
+  digits = digits.slice(0, 10);
+  if (digits.length < 4) return digits;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export function otherField(step) {
   return `${step.id}Other`;
 }
