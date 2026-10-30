@@ -159,6 +159,7 @@ export default function BidFlow({ slug }) {
     try {
       const result = await submitLead(slug, data);
       if (result.ok) {
+        window.fbq?.("track", "Lead", { content_name: project.title }, { eventID: result.eventId });
         setDone(true);
         try {
           sessionStorage.removeItem(storageKey);
