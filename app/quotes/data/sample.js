@@ -8,8 +8,8 @@ const surveyItem = {
 
 export default {
   slug: "sample",
-  customer: "Luke and Jessica Parsons",
-  address: "367 E Belmont Street, SLC, UT",
+  customer: "Daniel and Maria Whitfield",
+  address: "1842 S Juniper Lane, Sandy, UT",
   projectType: "Remodel",
   photo: "/images/quotes/sample-house.jpg",
   // Optional: which part of the photo stays visible in the square crop (CSS object-position).
