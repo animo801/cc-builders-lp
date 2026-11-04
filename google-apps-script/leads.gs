@@ -32,6 +32,12 @@ const COLUMNS = [
   { header: 'Zip', key: 'zip' },
   { header: 'Has plans', key: 'plans' },
   { header: 'Details', key: 'details' },
+  { header: 'UTM source', key: 'utm_source' },
+  { header: 'UTM medium', key: 'utm_medium' },
+  { header: 'UTM campaign', key: 'utm_campaign' },
+  { header: 'UTM content', key: 'utm_content' },
+  { header: 'UTM term', key: 'utm_term' },
+  { header: 'fbclid', key: 'fbclid' },
 ];
 
 function setup() {
@@ -101,6 +107,10 @@ function notify(lead) {
     `Has plans: ${lead.plans}`,
     '',
     lead.details,
+    '',
+    `Source: ${[lead.utm_source, lead.utm_medium].filter(Boolean).join(' / ') || 'direct'}`,
+    `Campaign: ${lead.utm_campaign || '-'}`,
+    `Ad: ${lead.utm_content || '-'}`,
     '',
     SpreadsheetApp.getActiveSpreadsheet().getUrl(),
   ].join('\n');

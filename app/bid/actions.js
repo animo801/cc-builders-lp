@@ -2,6 +2,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { cookies, headers } from "next/headers";
+import { ATTRIBUTION_COOKIE, parseAttribution } from "../attribution";
 import { activeSteps, collectAnswers, otherField, projects, validateStep } from "../projects";
 
 // The project-specific answers as "Question: answer" lines for the sheet's
@@ -28,6 +29,54 @@ async function sendToSheet(lead) {
   });
   const result = await res.json().catch(() => null);
   if (!result?.ok) throw new Error(`Sheet rejected lead: ${res.status} ${result?.error ?? "no JSON response"}`);
+}
+
+// Texts each new lead to the numbers in LEAD_ALERT_NUMBERS (comma-separated,
+// E.164 like +18015551234) from TWILIO_FROM_NUMBER. Only these alerts go to
+// those numbers; replies to the Twilio number still go wherever that number is
+// configured in Twilio. Never throws, so a texting problem can't fail a lead.
+async function textLeadAlert(lead) {
+  const { TWILIO_ACCOUNT_SID: sid, TWILIO_AUTH_TOKEN: token, TWILIO_FROM_NUMBER: from, LEAD_ALERT_NUMBERS } = process.env;
+  const to = (LEAD_ALERT_NUMBERS ?? "").split(",").map((n) => n.trim()).filter(Boolean);
+  if (!sid || !token || !from || to.length === 0) {
+    console.warn("Twilio lead alert skipped: TWILIO_* or LEAD_ALERT_NUMBERS not set.");
+    return;
+  }
+
+  const name = [lead.firstName, lead.lastName].filter(Boolean).join(" ");
+  const source = [
+    lead.utm_source && `Source: ${lead.utm_source}${lead.utm_medium ? ` / ${lead.utm_medium}` : ""}`,
+    lead.utm_campaign && `Campaign: ${lead.utm_campaign}`,
+    lead.utm_content && `Ad: ${lead.utm_content}`,
+    lead.utm_term && `Term: ${lead.utm_term}`,
+  ].filter(Boolean);
+  const body = [
+    `New bid request: ${lead.project}`,
+    name,
+    lead.phone,
+    lead.email,
+    [lead.address, lead.zip].filter(Boolean).join(", "),
+    ...(source.length ? ["", ...source] : []),
+  ]
+    .filter((line) => line !== undefined && line !== null)
+    .join("\n");
+
+  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  await Promise.all(
+    to.map(async (number) => {
+      try {
+        const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+          method: "POST",
+          headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ From: from, To: number, Body: body }),
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) console.error(`Twilio lead alert to ${number} failed: ${res.status} ${await res.text()}`);
+      } catch (err) {
+        console.error(`Twilio lead alert to ${number} errored`, err);
+      }
+    }),
+  );
 }
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
@@ -101,6 +150,7 @@ export async function submitLead(slug, data) {
   }
 
   const answers = collectAnswers(project, data);
+  const attribution = parseAttribution((await cookies()).get(ATTRIBUTION_COOKIE)?.value);
   const lead = {
     submittedAt: new Date().toISOString(),
     project: project.title,
@@ -112,6 +162,12 @@ export async function submitLead(slug, data) {
     zip: answers.zip,
     plans: answers.plans ?? "",
     details: leadDetails(project, { ...data, ...answers }),
+    utm_source: attribution.utm_source ?? "",
+    utm_medium: attribution.utm_medium ?? "",
+    utm_campaign: attribution.utm_campaign ?? "",
+    utm_content: attribution.utm_content ?? "",
+    utm_term: attribution.utm_term ?? "",
+    fbclid: attribution.fbclid ?? "",
   };
 
   // Always logged, so a lead is never lost even if the sheet is down.
@@ -129,6 +185,6 @@ export async function submitLead(slug, data) {
   }
 
   const eventId = randomUUID();
-  await sendLeadToMeta(eventId, project, answers);
+  await Promise.all([textLeadAlert(lead), sendLeadToMeta(eventId, project, answers)]);
   return { ok: true, eventId };
 }

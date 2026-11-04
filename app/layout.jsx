@@ -1,5 +1,6 @@
 import { Baskervville } from "next/font/google";
 import Script from "next/script";
+import { ATTRIBUTION_COOKIE, ATTRIBUTION_KEYS } from "./attribution";
 import "./globals.css";
 
 const baskervville = Baskervville({
@@ -16,6 +17,22 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={baskervville.variable}>
       <body>
+        {/* Remembers the ad's UTM tags (and fbclid) from whichever page a visitor
+            lands on, so submitLead in app/bid/actions.js can attach them to the
+            lead. Last touch wins: a new tagged visit replaces the old tags. */}
+        <Script
+          id="utm-capture"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+            (function(){
+              var p = new URLSearchParams(location.search), keys = ${JSON.stringify(ATTRIBUTION_KEYS)}, a = {}, any = false;
+              keys.forEach(function(k){ var v = p.get(k); if (v) { a[k] = v.slice(0, 200); any = true; } });
+              if (any) document.cookie = "${ATTRIBUTION_COOKIE}=" + encodeURIComponent(JSON.stringify(a)) + "; path=/; max-age=2592000; samesite=lax";
+            })();
+          `,
+          }}
+        />
         {pixelId && (
           <>
             <Script
