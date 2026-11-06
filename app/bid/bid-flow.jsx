@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { activeSteps, formatPhone, initialAnswers, otherField, projects, validateStep } from "../projects";
 import { submitLead } from "./actions";
+import { logFunnelEvent } from "../funnel";
 
 // Answers are kept in sessionStorage so a refresh, or coming back from the
 // referrals page, doesn't wipe the form.
@@ -128,7 +129,11 @@ export default function BidFlow({ slug }) {
   function choose(value) {
     const next = { ...data, [current.id]: value };
     update({ [current.id]: value });
-    if (current.referral?.(next)) return router.push(`/bid/${slug}/referrals`);
+    logFunnelEvent(slug, `${current.id}=${value}`);
+    if (current.referral?.(next)) {
+      logFunnelEvent(slug, "referred");
+      return router.push(`/bid/${slug}/referrals`);
+    }
     goTo(step + 1);
   }
 
@@ -153,12 +158,15 @@ export default function BidFlow({ slug }) {
     e.preventDefault();
     const stepError = validateStep(current, data);
     if (stepError) return setError(stepError);
+    if (current.type === "zip") logFunnelEvent(slug, "zip");
+    if (current.type === "multi") for (const pick of data[current.id]) logFunnelEvent(slug, `${current.id}=${pick}`);
     if (current.type !== "contact") return goTo(step + 1);
 
     setSubmitting(true);
     try {
       const result = await submitLead(slug, data);
       if (result.ok) {
+        logFunnelEvent(slug, "submitted");
         // Same events and eventId as the Conversions API call in actions.js, so Meta dedupes them.
         window.fbq?.("track", "Lead", { content_name: project.title }, { eventID: result.eventId });
         window.fbq?.("trackCustom", "BidRequestSubmitted", { content_name: project.title }, { eventID: result.eventId });

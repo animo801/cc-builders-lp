@@ -2,6 +2,7 @@ import Image from 'next/image';
 import heroImage from '../public/images/hero.jpg';
 import ctaImage from '../public/images/cta.jpg';
 import Button from './components/button';
+import FunnelTracker from './funnel-tracker';
 import Logo from './components/logo';
 import { GOOGLE_REVIEWS_URL, reviews } from './reviews';
 
@@ -375,6 +376,7 @@ function ClosingCta({ project }) {
 export default function LandingPage({ project }) {
   return (
     <main>
+      <FunnelTracker slug={project.slug} />
       <Hero project={project} />
       <Intro project={project} />
       <Projects project={project} />
