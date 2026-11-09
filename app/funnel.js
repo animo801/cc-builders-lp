@@ -1,35 +1,63 @@
-// Best-effort step-by-step funnel logging. Events go to the funnel_events
-// table behind robmetcalfdesign.com's /api/funnel-event, which feeds the
-// funnel chart at /admin/leads/analytics/cc-builders on that site. Event
-// names have to match rmd-website/app/admin/leads/analytics/cc-builders/stages.ts.
+// Best-effort step-by-step funnel logging. Events go to this site's own
+// /api/funnel-event route, which counts them in Redis for the chart at
+// /funnel. Event names have to be in app/funnel/stages.js or they're dropped.
 //
-// The www host matters: the bare domain redirects, and beacons don't survive that well.
-const ENDPOINT = process.env.NEXT_PUBLIC_FUNNEL_ENDPOINT ?? "https://www.robmetcalfdesign.com/api/funnel-event";
-const SESSION_KEY = "cc_funnel_session_id";
+// Add ?test=1 to any page to try the flow without counting toward /funnel; it
+// stays on for that tab until it closes or a page is opened with ?test=0.
 
-// One id per browser tab, shared by the landing page and the bid flow.
-function sessionId() {
-  let id = sessionStorage.getItem(SESSION_KEY);
+const SESSION_KEY = "cc_funnel_session_id";
+const VISITOR_KEY = "cc_funnel_visitor_id";
+const TEST_KEY = "cc_test_mode";
+
+function isTestMode() {
+  try {
+    const param = new URLSearchParams(window.location.search).get("test");
+    if (param === "1") sessionStorage.setItem(TEST_KEY, "1");
+    if (param === "0") sessionStorage.removeItem(TEST_KEY);
+    return sessionStorage.getItem(TEST_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+// crypto.randomUUID throws on older iPhones (including Facebook and
+// Instagram's in-app browsers there), so fall back to a random string.
+function randomId() {
+  try {
+    if (crypto.randomUUID) return crypto.randomUUID();
+  } catch {}
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+}
+
+function getId(storage, key) {
+  let id = storage.getItem(key);
   if (!id) {
-    id = crypto.randomUUID();
-    sessionStorage.setItem(SESSION_KEY, id);
+    id = randomId();
+    storage.setItem(key, id);
   }
   return id;
 }
 
-export function logFunnelEvent(slug, eventName, props) {
+export function logFunnelEvent(slug, eventName) {
+  if (isTestMode()) return;
   try {
-    const payload = JSON.stringify({
-      sessionId: sessionId(),
-      page: `cc-builders-${slug}`,
-      eventName,
-      props: props ?? null,
-    });
-    // text/plain keeps this a "simple" cross-origin request, so the browser
-    // sends it without a CORS preflight. The endpoint parses the body as JSON anyway.
-    const body = new Blob([payload], { type: "text/plain" });
-    if (!navigator.sendBeacon?.(ENDPOINT, body)) {
-      fetch(ENDPOINT, { method: "POST", mode: "no-cors", body, keepalive: true }).catch(() => {});
+    // The session id (one per tab) drives the step counts. The visitor id
+    // outlives the tab, so a returning visitor counts once in "unique visitors".
+    const sessionId = getId(sessionStorage, SESSION_KEY);
+    let visitorId = sessionId;
+    try {
+      visitorId = getId(localStorage, VISITOR_KEY);
+    } catch {}
+
+    const payload = JSON.stringify({ sessionId, visitorId, slug, eventName });
+    // sendBeacon survives the page navigating away right after a click.
+    if (!navigator.sendBeacon?.("/api/funnel-event", new Blob([payload], { type: "application/json" }))) {
+      fetch("/api/funnel-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
     }
   } catch {
     // analytics only — never block the visitor over this
