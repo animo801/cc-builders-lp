@@ -216,21 +216,36 @@ function Intro({ project }) {
         </h2>
         <div className='mt-4 space-y-10 font-serif text-[20px] leading-[40px] md:text-[24px]'>
           <p>
-            So this is a test... we are going to type basically whatever we want
-            into here to see what this thing can do. And then we will change it
-            and make it look better.
+            Most builders just give you a nice round number. But usually that
+            number doesn’t go through everything in your remodel. At CC Builders,
+            we do estimates different. Our founder, Cameron Cook, comes to you to
+            measure and understand what you want.
           </p>
           <p>
-            So just to be careful, lets also see what it takes to make it look
-            like a second paragraph up in hizzle. Boom.
+            Then using projects done in the same year as reference, he prices
+            every individual item in your project. This helps you see exactly
+            what it could cost, and how your design decisions can change that
+            estimate. All in one easy to find link we send to your phone, as well
+            as a polished PDF.
           </p>
         </div>
         <div className='mt-8'>
           <Button href={`/bid/${project.slug}`} />
         </div>
       </div>
-      {/* Image sits above the copy on mobile, to the right on desktop. */}
-      <div className='-order-1 aspect-[560/582] w-full bg-placeholder lg:order-none' />
+      {/* Video sits above the copy on mobile, to the right on desktop. The file
+          is pre-cropped to this box's 560:582 shape to keep it small. */}
+      <video
+        src='/videos/quote-demo.mp4'
+        poster='/videos/quote-demo-poster.jpg'
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload='metadata'
+        aria-label='Scrolling through a CC Builders bid on a phone'
+        className='-order-1 aspect-[560/582] w-full bg-placeholder object-cover lg:order-none'
+      />
     </section>
   );
 }
