@@ -43,6 +43,7 @@ const remodels = {
     { src: "/images/projects/remodels/open-living.jpg", alt: "Open living room and kitchen with a plywood ceiling and yellow pendant" },
   ],
   headline: "Get a detailed line item bid on your remodel",
+  introHeadline: "A line-by-line remodel estimate, sent right to your phone.",
   priceTags: [
     { label: "Paint and smooth drywall finish", price: "$15,514.11" },
     { label: "Sliding glass door", price: "$22,380.40" },
@@ -126,6 +127,7 @@ const additions = {
   title: "Home additions",
   plural: "Additions",
   headline: "Get a detailed line item bid on your addition",
+  introHeadline: "A line-by-line addition estimate, sent right to your phone.",
   priceTags: [
     { label: "Foundation", price: "$18,940.00" },
     { label: "Framing", price: "$27,615.32" },
@@ -212,6 +214,7 @@ const newBuild = {
     { src: "/images/projects/new-build/wood-gable-entry.jpg", alt: "Recessed front entry of a new home with vertical wood siding" },
   ],
   headline: "Get a detailed line item bid on your new home",
+  introHeadline: "A line-by-line new home estimate, sent right to your phone.",
   priceTags: [
     { label: "Site work", price: "$31,205.60" },
     { label: "Framing", price: "$84,710.25" },
@@ -291,6 +294,7 @@ const adus = {
   title: "ADUs",
   plural: "ADUs",
   headline: "Get a detailed line item bid on your ADU",
+  introHeadline: "A line-by-line ADU estimate, sent right to your phone.",
   priceTags: [
     { label: "Utility hookups", price: "$12,470.00" },
     { label: "Kitchenette", price: "$14,935.45" },

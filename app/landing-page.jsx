@@ -209,20 +209,18 @@ function Hero({ project }) {
 
 function Intro({ project }) {
   return (
-    <section className='mx-auto grid max-w-[1248px] gap-12 px-4 py-24 lg:grid-cols-[648px_560px] lg:justify-between lg:gap-0'>
+    <section className='mx-auto grid max-w-[1248px] gap-12 px-4 py-24 lg:grid-cols-[minmax(0,1fr)_560px] lg:gap-x-20 lg:gap-y-0'>
       <div className='lg:pt-[47px]'>
         <h2 className='font-serif text-[36px] font-bold leading-[0.95] md:text-[48px]'>
-          {project.headline}
+          {project.introHeadline}
         </h2>
         <div className='mt-4 space-y-10 font-serif text-[20px] leading-[40px] md:text-[24px]'>
           <p>
-            Most builders just give you a nice round number. But usually that
-            number doesn’t go through everything in your remodel. At CC Builders,
-            we do estimates different. Our founder, Cameron Cook, comes to you to
-            measure and understand what you want.
+            At CC Builders, we do estimates different. Our founder, Cameron Cook,
+            comes to you to measure and understand what you want.
           </p>
           <p>
-            Then using projects done in the same year as reference, he prices
+            Using projects done in the same year as reference, Cameron prices
             every individual item in your project. This helps you see exactly
             what it could cost, and how your design decisions can change that
             estimate. All in one easy to find link we send to your phone, as well
@@ -398,7 +396,9 @@ export default function LandingPage({ project }) {
       <Reviews />
       <Faq faqs={project.faqs} />
       <ClosingCta project={project} />
-      <footer className='h-[630px] bg-ink' />
+      <footer className='bg-ink px-4 py-6 text-center text-xs text-white/50'>
+        © {new Date().getFullYear()} CC Builders. All rights reserved.
+      </footer>
     </main>
   );
 }
