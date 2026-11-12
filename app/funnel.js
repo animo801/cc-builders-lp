@@ -8,6 +8,17 @@
 const SESSION_KEY = "cc_funnel_session_id";
 const VISITOR_KEY = "cc_funnel_visitor_id";
 const TEST_KEY = "cc_test_mode";
+const DESIGN_KEY = "cc_funnel_design";
+
+// Remembers which landing page design this tab landed on (see DESIGNS in
+// app/funnel/store.js), so the bid-flow events that follow carry it too.
+// No design (the original page) clears it.
+export function setFunnelDesign(design) {
+  try {
+    if (design) sessionStorage.setItem(DESIGN_KEY, design);
+    else sessionStorage.removeItem(DESIGN_KEY);
+  } catch {}
+}
 
 function isTestMode() {
   try {
@@ -49,7 +60,8 @@ export function logFunnelEvent(slug, eventName) {
       visitorId = getId(localStorage, VISITOR_KEY);
     } catch {}
 
-    const payload = JSON.stringify({ sessionId, visitorId, slug, eventName });
+    const design = sessionStorage.getItem(DESIGN_KEY) ?? undefined;
+    const payload = JSON.stringify({ sessionId, visitorId, slug, eventName, design });
     // sendBeacon survives the page navigating away right after a click.
     if (!navigator.sendBeacon?.("/api/funnel-event", new Blob([payload], { type: "application/json" }))) {
       fetch("/api/funnel-event", {

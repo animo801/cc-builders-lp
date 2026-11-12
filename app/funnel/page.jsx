@@ -2,7 +2,18 @@ import { Redis } from "@upstash/redis";
 import { connection } from "next/server";
 import { FunnelChart } from "./funnel-chart";
 import { FUNNEL_PROJECTS } from "./stages";
-import { addDays, FUNNEL_TIMEZONE, funnelDay, funnelKey, pageEvent, viewsName, VISITORS_NAME } from "./store";
+import {
+  addDays,
+  designName,
+  designSinceKey,
+  DESIGNS,
+  FUNNEL_TIMEZONE,
+  funnelDay,
+  funnelKey,
+  pageEvent,
+  viewsName,
+  VISITORS_NAME,
+} from "./store";
 
 // Bid funnel for every landing page: unique sessions at each step, from the
 // landing page through the bid flow. Password protected by proxy.js
@@ -46,6 +57,15 @@ function resolveRange(params) {
   };
 }
 
+// The redesign split, from the `design` search param: "b" = only sessions on
+// the redesign, "before-b" = everything else (the original design). null = no split.
+function resolveSplit(param) {
+  if (typeof param !== "string") return null;
+  const before = param.startsWith("before-");
+  const design = before ? param.slice("before-".length) : param;
+  return Object.hasOwn(DESIGNS, design) ? { design, before } : null;
+}
+
 function daysBetween(from, to) {
   const days = [];
   for (let d = from; d <= to; d = addDays(d, 1)) days.push(d);
@@ -53,41 +73,95 @@ function daysBetween(from, to) {
 }
 
 // Unique-session counts for every event on every page, plus the headline
-// page views and unique visitors, in one Redis round trip.
-async function loadMetrics(range) {
+// page views and unique visitors, in one Redis round trip. With a redesign
+// split, "after" reads the design's own sets and "before" is the page's sets
+// minus the design's (SDIFF), since every tagged event is in both.
+async function loadMetrics(range, split) {
   const events = FUNNEL_PROJECTS.flatMap((p) =>
     p.stages.flatMap((s) => s.nodes.map((n) => pageEvent(p.slug, n.event))),
   );
   const setNames = [...events, VISITORS_NAME];
   const viewNames = FUNNEL_PROJECTS.map((p) => viewsName(p.slug));
+  const days = range ? daysBetween(range.from, range.to) : null;
   const pipeline = Redis.fromEnv().pipeline();
+  const tmpPrefix = `cc:funnel:tmp:${crypto.randomUUID()}`;
+  let commands = 0;
+  const run = (fn) => {
+    fn();
+    return commands++;
+  };
 
-  if (!range) {
-    setNames.forEach((n) => pipeline.scard(funnelKey(n)));
-    pipeline.mget(...viewNames.map((n) => funnelKey(n)));
-  } else {
-    // Union each set's daily keys into a throwaway key (SUNIONSTORE returns
-    // the union's size) so someone seen on several days counts once.
-    const days = daysBetween(range.from, range.to);
-    const tmpPrefix = `cc:funnel:tmp:${crypto.randomUUID()}`;
-    setNames.forEach((n) => {
-      const tmp = `${tmpPrefix}:${n}`;
-      pipeline.sunionstore(tmp, ...days.map((d) => funnelKey(n, d)));
-      pipeline.del(tmp);
-    });
-    pipeline.mget(...viewNames.flatMap((n) => days.map((d) => funnelKey(n, d))));
+  const tmpKeys = [];
+  const tmpKey = (name) => {
+    const key = `${tmpPrefix}:${tmpKeys.length}:${name}`;
+    tmpKeys.push(key);
+    return key;
+  };
+
+  // Queues a command whose result is the size of set `name` over the range:
+  // SCARD of the all-time key, or SUNIONSTORE of the daily keys (which returns
+  // the union's size) so someone seen on several days counts once.
+  function sizeOf(name) {
+    if (!days) return run(() => pipeline.scard(funnelKey(name)));
+    return run(() => pipeline.sunionstore(tmpKey(name), ...days.map((d) => funnelKey(name, d))));
   }
 
+  // A key holding set `name` over the range, for SDIFF.
+  function keyFor(name) {
+    if (!days) return funnelKey(name);
+    const key = tmpKey(name);
+    run(() => pipeline.sunionstore(key, ...days.map((d) => funnelKey(name, d))));
+    return key;
+  }
+
+  // Pipeline index of each set's size.
+  const sizeAt = setNames.map((name) => {
+    if (!split) return sizeOf(name);
+    const tagged = designName(split.design, name);
+    if (!split.before) return sizeOf(tagged);
+    const all = keyFor(name);
+    const after = keyFor(tagged);
+    return run(() => pipeline.sdiffstore(tmpKey(`diff:${name}`), all, after));
+  });
+
+  // Page-view counters: total, and the redesign's share when splitting.
+  const viewKeys = (names) => (days ? names.flatMap((n) => days.map((d) => funnelKey(n, d))) : names.map((n) => funnelKey(n)));
+  const totalViewsAt = run(() => pipeline.mget(...viewKeys(viewNames)));
+  const designViewsAt = split
+    ? run(() => pipeline.mget(...viewKeys(viewNames.map((n) => designName(split.design, n)))))
+    : null;
+  if (tmpKeys.length) run(() => pipeline.del(...tmpKeys));
+
   const results = await pipeline.exec();
-  const stride = range ? 2 : 1;
-  const sizes = setNames.map((_, i) => Number(results[i * stride] ?? 0));
-  const viewCounts = results[results.length - 1] ?? [];
+  const sum = (values) => (values ?? []).reduce((total, v) => total + Number(v ?? 0), 0);
+  const sizes = sizeAt.map((i) => Number(results[i] ?? 0));
+  const totalViews = sum(results[totalViewsAt]);
+  const designViews = split ? sum(results[designViewsAt]) : 0;
 
   return {
     counts: Object.fromEntries(events.map((e, i) => [e, sizes[i]])),
     visitors: sizes[sizes.length - 1],
-    views: viewCounts.reduce((sum, v) => sum + Number(v ?? 0), 0),
+    views: !split ? totalViews : split.before ? totalViews - designViews : designViews,
   };
+}
+
+// When each redesign went live (ISO strings), or null if it hasn't had a visit yet.
+async function loadDesignSince() {
+  const ids = Object.keys(DESIGNS);
+  const values = await Redis.fromEnv().mget(...ids.map(designSinceKey));
+  return Object.fromEntries(ids.map((id, i) => [id, values[i] ?? null]));
+}
+
+function formatTime(iso) {
+  return new Date(iso).toLocaleString("en-US", {
+    timeZone: FUNNEL_TIMEZONE,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
 }
 
 function formatDay(day) {
@@ -119,6 +193,8 @@ export default async function FunnelPage({ searchParams }) {
   await connection();
   const params = await searchParams;
   const { range, activeKey } = resolveRange(params);
+  const split = resolveSplit(params.design);
+  const designParam = typeof params.design === "string" && split ? params.design : undefined;
   const project = FUNNEL_PROJECTS.find((p) => p.slug === params.project) ?? FUNNEL_PROJECTS[0];
   // Keep the selected tab when the date range changes, and vice versa.
   const projectParam = project === FUNNEL_PROJECTS[0] ? undefined : project.slug;
@@ -126,9 +202,10 @@ export default async function FunnelPage({ searchParams }) {
     activeKey === "custom" ? { from: range.from, to: range.to } : { range: activeKey === "all" ? undefined : activeKey };
 
   let metrics = { counts: {}, views: 0, visitors: 0 };
+  let since = {};
   let error = null;
   try {
-    metrics = await loadMetrics(range);
+    [metrics, since] = await Promise.all([loadMetrics(range, split), loadDesignSince()]);
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
   }
@@ -149,14 +226,22 @@ export default async function FunnelPage({ searchParams }) {
     <main className="min-h-screen bg-white pb-16 font-sans text-black">
       <div className="bg-black/[0.04] px-4 pb-10 pt-8 md:px-10">
         <h1 className="text-[28px] font-bold leading-[1.15]">CC Builders Funnel</h1>
-        <p className="mt-1 text-sm text-black/50">Showing {rangeLabel}. Funnel steps count unique sessions.</p>
+        <p className="mt-1 text-sm text-black/50">
+          Showing {rangeLabel}
+          {split && (split.before ? ", original designs only" : `, ${DESIGNS[split.design].label.toLowerCase()} only`)}.
+          Funnel steps count unique sessions.
+        </p>
 
         <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
           <nav aria-label="Date range" className="flex flex-wrap gap-2">
             {PRESETS.map((p) => (
               <a
                 key={p.key}
-                href={funnelHref({ range: p.key === "all" ? undefined : p.key, project: projectParam })}
+                href={funnelHref({
+                  range: p.key === "all" ? undefined : p.key,
+                  project: projectParam,
+                  design: designParam,
+                })}
                 aria-current={activeKey === p.key ? "page" : undefined}
                 className={`rounded-full px-4 py-2 text-sm font-bold no-underline ${
                   activeKey === p.key ? "bg-black text-white" : "bg-white text-black/70 hover:bg-black/10"
@@ -169,6 +254,7 @@ export default async function FunnelPage({ searchParams }) {
 
           <form action="/funnel" className="flex flex-wrap items-end gap-2">
             {projectParam && <input type="hidden" name="project" value={projectParam} />}
+            {designParam && <input type="hidden" name="design" value={designParam} />}
             {["from", "to"].map((name) => (
               <label key={name} className="text-xs font-bold capitalize text-black/50">
                 {name}
@@ -193,6 +279,39 @@ export default async function FunnelPage({ searchParams }) {
           </form>
         </div>
 
+        {Object.entries(DESIGNS).map(([id, info]) => {
+          const options = [
+            { value: undefined, label: "All" },
+            { value: `before-${id}`, label: "Before redesign" },
+            { value: id, label: "After redesign" },
+          ];
+          return (
+            <div key={id} className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <nav aria-label={info.label} className="flex flex-wrap gap-2">
+                {options.map((o) => {
+                  const active = designParam === o.value;
+                  return (
+                    <a
+                      key={o.label}
+                      href={funnelHref({ ...rangeParams, project: projectParam, design: o.value })}
+                      aria-current={active ? "page" : undefined}
+                      className={`rounded-full px-4 py-2 text-sm font-bold no-underline ${
+                        active ? "bg-black text-white" : "bg-white text-black/70 hover:bg-black/10"
+                      }`}
+                    >
+                      {o.label}
+                    </a>
+                  );
+                })}
+              </nav>
+              <p className="text-sm text-black/50">
+                {info.label} of /{info.slug}{" "}
+                {since[id] ? `went live ${formatTime(since[id])}` : "hasn’t had a visit yet"}.
+              </p>
+            </div>
+          );
+        })}
+
         <section aria-label="Summary" className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
           <Stat label="Page views" value={views.toLocaleString()} note="All pages, reloads included" />
           <Stat label="Unique visitors" value={visitors.toLocaleString()} note="Counted once across the range" />
@@ -215,7 +334,11 @@ export default async function FunnelPage({ searchParams }) {
             return (
               <a
                 key={p.slug}
-                href={funnelHref({ ...rangeParams, project: p === FUNNEL_PROJECTS[0] ? undefined : p.slug })}
+                href={funnelHref({
+                  ...rangeParams,
+                  project: p === FUNNEL_PROJECTS[0] ? undefined : p.slug,
+                  design: designParam,
+                })}
                 aria-current={active ? "page" : undefined}
                 className={`-mb-px shrink-0 border-b-2 pb-3 no-underline ${
                   active ? "border-black text-black" : "border-transparent text-black/50 hover:text-black/80"

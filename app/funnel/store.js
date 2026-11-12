@@ -27,6 +27,23 @@ export function viewsName(slug) {
 // Visitor ids that landed on any landing page.
 export const VISITORS_NAME = "visitors";
 
+// Landing page redesigns. A redesigned page tags its visitors' events (see
+// FunnelTracker), and each tagged event is also written under a
+// `design:<id>:` name, so /funnel can split a page's numbers at the moment the
+// redesign went live. Untagged events on that page are the earlier design.
+export const DESIGNS = {
+  b: { slug: "remodels", label: "Remodels redesign" },
+};
+
+export function designName(design, name) {
+  return `design:${design}:${name}`;
+}
+
+// When the redesign went live: set once, by its first tagged event.
+export function designSinceKey(design) {
+  return funnelKey(designName(design, "since"));
+}
+
 // YYYY-MM-DD for `date` in FUNNEL_TIMEZONE.
 export function funnelDay(date = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {

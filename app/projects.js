@@ -33,14 +33,15 @@ const remodels = {
   title: "Remodels",
   plural: "Remodels",
   // Photos for the "we've completed" carousel, in public/images/projects/<slug>/.
-  // Pages without a gallery show gray placeholders.
+  // Pages without a gallery show gray placeholders. `caption` shows under the
+  // photo on /remodels/b only.
   gallery: [
-    { src: "/images/projects/remodels/kitchen-ovens.jpg", alt: "Kitchen with stacked wall ovens and a pull-down faucet" },
-    { src: "/images/projects/remodels/wet-bar.jpg", alt: "Wood-panel wet bar with smoked glass cabinets and a wine fridge" },
-    { src: "/images/projects/remodels/primary-bath.jpg", alt: "Primary bathroom with a tiled soaking tub and rain shower" },
-    { src: "/images/projects/remodels/kitchen-peninsula.jpg", alt: "Kitchen with a waterfall peninsula and mountain views" },
-    { src: "/images/projects/remodels/guest-bath.jpg", alt: "Bathroom with marble mosaic tile, a soaking tub, and a glass shower" },
-    { src: "/images/projects/remodels/open-living.jpg", alt: "Open living room and kitchen with a plywood ceiling and yellow pendant" },
+    { src: "/images/projects/remodels/kitchen-ovens.jpg", alt: "Kitchen with stacked wall ovens and a pull-down faucet", caption: "Full chef's kitchen remodel in North Salt Lake" },
+    { src: "/images/projects/remodels/wet-bar.jpg", alt: "Wood-panel wet bar with smoked glass cabinets and a wine fridge", caption: "Remodel just outside of Emigration Canyon in SLC" },
+    { src: "/images/projects/remodels/primary-bath.jpg", alt: "Primary bathroom with a tiled soaking tub and rain shower", caption: "Primary bath with a soaking tub" },
+    { src: "/images/projects/remodels/kitchen-peninsula.jpg", alt: "Kitchen with a waterfall peninsula and mountain views", caption: "Full kitchen remodel outside of Downtown SLC" },
+    { src: "/images/projects/remodels/guest-bath.jpg", alt: "Bathroom with marble mosaic tile, a soaking tub, and a glass shower", caption: "Marble-tiled guest bath" },
+    { src: "/images/projects/remodels/open-living.jpg", alt: "Open living room and kitchen with a plywood ceiling and yellow pendant", caption: "Open kitchen remodel in Millcreek, UT" },
   ],
   headline: "Get a detailed line item bid on your remodel",
   introHeadline: "A line-by-line remodel estimate, sent right to your phone.",

@@ -1,11 +1,15 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 export const buttonClassName =
-  "inline-flex h-[80px] w-[255px] items-center justify-center bg-brand text-[20px] font-bold leading-[56px] text-white md:text-[24px] transition-opacity hover:opacity-90 disabled:opacity-50";
+  'inline-flex h-[80px] w-[255px] items-center justify-center bg-brand text-[20px] font-bold leading-[56px] text-white md:text-[24px] transition-opacity hover:opacity-90 disabled:opacity-50';
 
-export default function Button({ href = "/bid/remodels", children = "Get your bid" }) {
+export default function Button({
+  href = '/bid/remodels',
+  children = 'Get your bid',
+  className = '',
+}) {
   return (
-    <Link href={href} className={buttonClassName}>
+    <Link href={href} className={`${buttonClassName} ${className}`}>
       {children}
     </Link>
   );
